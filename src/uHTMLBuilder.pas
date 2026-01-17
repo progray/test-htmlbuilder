@@ -7,9 +7,11 @@ uses
 
 type
   THTMLBase = class
+  public
+    function Build: string; virtual; abstract;
   end;
   
-  THTMLCell = class
+  THTMLCell = class(THTMLBase)
   private
     Fstyle: string;
     FName: string;
@@ -20,7 +22,7 @@ type
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
     property ItemList: TObjectList read FItemList write FItemList;
-    function Build: string;
+    function Build: string; override;
     constructor Create;overload;
     constructor Create(cellName, cellStyle: string);overload;
     destructor Destroy; override;
@@ -31,18 +33,18 @@ type
     DataSet: TDataSet
   ) of object;  
 
-  THTMLItem = class
+  THTMLItem = class(THTMLBase)
   private
     FHtml: TStringList;
   protected
   public
     property HTML: TStringList read FHtml write FHtml;
-    function Build: string;
+    function Build: string; override;
     constructor Create(itemHtml: string = '');
     destructor Destroy;override;
   end;
 
-  THTMLParagraph = class
+  THTMLParagraph = class(THTMLBase)
   private
     Fstyle: string;
     FName: string;
@@ -53,13 +55,13 @@ type
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
     property ItemList: TObjectList read FItemList write FItemList;
-    function Build: string;
+    function Build: string; override;
     constructor Create;overload;
     constructor Create(paragraphName, style: string);overload;
     destructor Destroy;override;
   end;
 
-  THTMLRow = class
+  THTMLRow = class(THTMLBase)
   private
     Fstyle: string;
     FName: string;
@@ -70,7 +72,7 @@ type
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
     property CellList: TObjectList read FCellList write FCellList;
-    function Build: string;
+    function Build: string; override;
     function AddCell(cellName,cellStyle:string): THTMLCell;
     constructor Create;overload;
     constructor Create(rowCellList: array of THTMLCell);overload;
@@ -89,7 +91,7 @@ type
     function AddRow ( cellList: array of THTMLCell; rowStyle: string ): THTMLRow;overload;
     function AddRow ( rowName, rowStyle: string ): THTMLRow;overload;
     function AddEmptyRow(rowStyle:string = '') : THTMLRow;
-    function Build:string;
+    function Build:string; override;
     procedure SetDataSet(dataSet: TDataSet;
         HeaderColor: string = '';
         EvenColor: string = '';
@@ -100,7 +102,7 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLReport = class
+  THTMLReport = class(THTMLBase)
   private
     FHTMLItemList: TObjectList;
     FStyle: string;
@@ -118,7 +120,7 @@ type
     procedure AddTable(table: THTMLTable);
     procedure AddItem(item: THTMLItem);
     function AddParagraph(paragraphName, paragraphStyle: string): THTMLParagraph;
-    function Build: string;
+    function Build: string; override;
     procedure SaveToFile(fileName: string);
     procedure Clear;
     constructor Create;overload;
@@ -493,18 +495,10 @@ end;
 
 class function TBuild.Build(item: TObject): string;
 begin
-  if item is THTMLReport then
-    Result := THTMLReport(item).Build
-  else if item is THTMLTable then
-    Result := THTMLTable(item).Build
-  else if item is THTMLRow then
-    Result := THTMLRow(item).Build
-  else if item is THTMLCell then
-    Result := THTMLCell(item).Build
-  else if item is THTMLItem then
-    Result := THTMLItem(item).Build
-  else if item is THTMLParagraph then
-    Result := THTMLParagraph(item).Build;
+  if item is THTMLBase then
+    Result := THTMLBase(item).Build
+  else
+    Result := '';
 end;
 
 { THTMLParagraph }
