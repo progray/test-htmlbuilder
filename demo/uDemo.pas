@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, DB, DBClient, uHTMLBuilder, ShellAPI;
+  Dialogs, StdCtrls, DB, DBClient, uHTMLBuilder, ShellAPI, StrUtils;
 
 type
   TfrmDemo = class(TForm)
@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnCSSClass: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnCSSClassClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -72,6 +74,16 @@ begin
     style.Add('* {font-family:Arial;font-size:11pt}');
     style.Add('html, body {height:100%;}');
     style.Add('table {width:100% ;border-collapse: collapse;}');
+    style.Add('.table-bordered {border: 2px solid #333;}');
+    style.Add('.table-striped tr:nth-child(even) {background-color: #f2f2f2;}');
+    style.Add('.header-row {background-color: #4CAF50;color: white;}');
+    style.Add('.header-cell {font-weight: bold;color: white;}');
+    style.Add('.highlight-cell {background-color: #ffeb3b;font-weight: bold;}');
+    style.Add('.paragraph-title {font-size: 16pt;font-weight: bold;color: #2196F3;text-align: center;}');
+    style.Add('.dataset-header {background-color: #2196F3;color: white;font-weight: bold;}');
+    style.Add('.dataset-even {background-color: #e3f2fd;}');
+    style.Add('.dataset-odd {background-color: #bbdefb;}');
+    style.Add('.dataset-cell {padding: 8px;}');
     Result := style.Text;
   finally
     style.Free;
@@ -93,14 +105,13 @@ var
 begin
   html := THTMLReport.Create(GetReportStyle);
   table := THTMLTable.Create;
-  try
-    table.SetDataSet(cdsProducts, '#909090', '#FFFFFF', '#D0D0D0');
-    html.AddParagraph('Test using dataset', cPARAGRAPH_STYLE);
-    html.AddTable(table);
-    OpenHTMLDocument(html);
-  finally
-    FreeAndNil(html);
-  end;
+  table.CSSClass := 'table-bordered table-striped';
+  table.SetDataSet(cdsProducts, '', '', '', '', nil, 
+    'dataset-header', 'dataset-even', 'dataset-odd', 'dataset-cell');
+  html.AddParagraph('Test using dataset with CSSClass', cPARAGRAPH_STYLE);
+  html.AddTable(table);
+  OpenHTMLDocument(html);
+  FreeAndNil(html);
 end;
 
 procedure TfrmDemo.btnMultiHeaderClick(Sender: TObject);
@@ -138,6 +149,50 @@ begin
     end;
 
     html.AddParagraph('Test using multi header', cPARAGRAPH_STYLE);
+    html.AddTable(table);
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
+
+procedure TfrmDemo.btnCSSClassClick(Sender: TObject);
+var
+  html: THTMLReport;
+  table: THTMLTable;
+  row: THTMLRow;
+  cell: THTMLCell;
+  paragraph: THTMLParagraph;
+  i: Integer;
+begin
+  html := THTMLReport.Create(GetReportStyle);
+  try
+    paragraph := THTMLParagraph.Create;
+    paragraph.CSSClass := 'paragraph-title';
+    paragraph.Name := 'CSS Class Test - Bootstrap Style';
+    html.AddParagraph(paragraph.Name, '');
+
+    table := THTMLTable.Create;
+    table.CSSClass := 'table-bordered table-striped';
+
+    row := THTMLRow.Create;
+    row.CSSClass := 'header-row';
+    row.AddCell('Product', '');
+    row.AddCell('Price', '');
+    row.AddCell('Status', '');
+    table.RowList.Add(row);
+
+    for i := 1 to 5 do
+    begin
+      row := THTMLRow.Create;
+      cell := row.AddCell('PRODUCT ' + IntToStr(i), '');
+      if i = 3 then
+        cell.CSSClass := 'highlight-cell';
+      row.AddCell('$' + FormatFloat('#,###.00', RandomRange(10, 100)), '');
+      row.AddCell(IfThen(i mod 2 = 0, 'Available', 'Sold Out'), '');
+      table.RowList.Add(row);
+    end;
+
     html.AddTable(table);
     OpenHTMLDocument(html);
   finally
