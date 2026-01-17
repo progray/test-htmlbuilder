@@ -13,12 +13,14 @@ type
   private
     Fstyle: string;
     FName: string;
+    FCSSClass: string;
     FItemList: TObjectList;
     procedure Initialize(cellName:string = ''; cellStyle: string = '');
   protected
   public
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
+    property CSSClass: string read FCSSClass write FCSSClass;
     property ItemList: TObjectList read FItemList write FItemList;
     function Build: string;
     constructor Create;overload;
@@ -46,12 +48,14 @@ type
   private
     Fstyle: string;
     FName: string;
+    FCSSClass: string;
     FItemList: TObjectList;
     procedure Initialize(paragraphName:string = ''; style: string = '');
   protected
   public
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
+    property CSSClass: string read FCSSClass write FCSSClass;
     property ItemList: TObjectList read FItemList write FItemList;
     function Build: string;
     constructor Create;overload;
@@ -63,12 +67,14 @@ type
   private
     Fstyle: string;
     FName: string;
+    FCSSClass: string;
     FCellList: TObjectList;
     procedure Initialize(rowCellList: array of THTMLCell; rowStyle: string = '');
   protected
   public
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
+    property CSSClass: string read FCSSClass write FCSSClass;
     property CellList: TObjectList read FCellList write FCellList;
     function Build: string;
     function AddCell(cellName,cellStyle:string): THTMLCell;
@@ -82,20 +88,26 @@ type
   private
     FRowList: TObjectList;
     Fstyle: string;
+    FCSSClass: string;
   protected
   public
     property Style: string read FStyle write FStyle;
+    property CSSClass: string read FCSSClass write FCSSClass;
     property RowList: TObjectList read FRowList write FRowList;
     function AddRow ( cellList: array of THTMLCell; rowStyle: string ): THTMLRow;overload;
     function AddRow ( rowName, rowStyle: string ): THTMLRow;overload;
     function AddEmptyRow(rowStyle:string = '') : THTMLRow;
     function Build:string;
     procedure SetDataSet(dataSet: TDataSet;
-        HeaderColor: string = '';
-        EvenColor: string = '';
-        OddColor: string = '';
-        EmptyValue: string = '';
-        AfterAddRow: TAfterAddRow = nil);
+      HeaderColor: string = '';
+      EvenColor: string = '';
+      OddColor: string = '';
+      EmptyValue: string = '';
+      AfterAddRow: TAfterAddRow = nil;
+      HeaderCSSClass: string = '';
+      EvenCSSClass: string = '';
+      OddCSSClass: string = '';
+      CellCSSClass: string = '');
     constructor Create(tableStyle: string = '');
     destructor Destroy;override;
   end;
@@ -164,11 +176,20 @@ function THTMLTable.Build: string;
 var
   i: Integer;
   html: TStringList;
+  attributes: string;
 begin
   html := TStringList.Create;
   try
     html.Clear;
-    html.Add('<table ' + Self.Style + '>');
+    attributes := Self.Style;
+    if FCSSClass <> '' then
+    begin
+      if attributes <> '' then
+        attributes := attributes + ' ';
+      attributes := attributes + 'class="' + FCSSClass + '"';
+    end;
+    
+    html.Add('<table ' + attributes + '>');
     for i := 0 to FRowList.Count - 1 do
       //BUILD ROW
       html.Add(TBuild.Build(FRowList[i]));
@@ -183,6 +204,7 @@ constructor THTMLTable.Create(tableStyle: string = '');
 begin
   RowList := TObjectList.Create;
   Style := tableStyle;
+  FCSSClass := '';
 end;
 
 destructor THTMLTable.Destroy;
@@ -202,7 +224,11 @@ end;
 procedure THTMLTable.SetDataSet(
   dataSet: TDataSet; HeaderColor: string = '';
   EvenColor: string = ''; OddColor: string = ''; 
-  EmptyValue: string = ''; AfterAddRow: TAfterAddRow = nil);
+  EmptyValue: string = ''; AfterAddRow: TAfterAddRow = nil;
+  HeaderCSSClass: string = '';
+  EvenCSSClass: string = '';
+  OddCSSClass: string = '';
+  CellCSSClass: string = '');
 const
   StyleHeader='';
   StyleData='';
@@ -214,9 +240,13 @@ begin
   //prototipo
   row := THTMLRow.Create;
   row.Style := 'bgcolor="' + HeaderColor + '"';
+  row.CSSClass := HeaderCSSClass;
   for i := 0 to dataSet.FieldCount - 1 do
     if dataSet.Fields[i].Visible then
-      row.AddCell('<b>' + dataSet.Fields[i].DisplayName + '</b>', StyleHeader);
+    begin
+      cell := row.AddCell('<b>' + dataSet.Fields[i].DisplayName + '</b>', StyleHeader);
+      cell.CSSClass := CellCSSClass;
+    end;
   Self.RowList.Add(row);
   dataSet.DisableControls;
   try
@@ -225,9 +255,15 @@ begin
     begin
       row := THTMLRow.Create;
       if ((dataSet.RecNo mod 2) <> 0) then
-        row.Style := 'bgcolor="' + EvenColor + '"'
+      begin
+        row.Style := 'bgcolor="' + EvenColor + '"';
+        row.CSSClass := EvenCSSClass;
+      end
       else
+      begin
         row.Style := 'bgcolor="' + OddColor + '"';
+        row.CSSClass := OddCSSClass;
+      end;
 
       for i := 0 to dataSet.FieldCount - 1 do
         if dataSet.Fields[i].Visible then
@@ -237,6 +273,7 @@ begin
           else
             cell := row.AddCell(dataSet.FieldByName(dataSet.Fields[i].FieldName).DisplayText, StyleData);
 
+          cell.CSSClass := CellCSSClass;
           if cell.Name = EmptyStr then
             cell.Name := EmptyValue;
         end;
@@ -261,10 +298,19 @@ function THTMLCell.Build: string;
 var
   html: TStringList;
   i: Integer;
+  attributes: string;
 begin
   html := TStringList.Create;
   try
-    html.Add('    <td ' + Self.Style + '>');
+    attributes := Self.Style;
+    if FCSSClass <> '' then
+    begin
+      if attributes <> '' then
+        attributes := attributes + ' ';
+      attributes := attributes + 'class="' + FCSSClass + '"';
+    end;
+    
+    html.Add('    <td ' + attributes + '>');
     if Self.Name <> '' then
       html.Add('      ' + Self.Name);
     //BUILD CHILD ITEM, HTML, CELL, ETC
@@ -293,6 +339,7 @@ begin
   FItemList := TObjectList.Create;
   Name := cellName;
   Style := cellStyle;
+  FCSSClass := '';
 end;
 
 { THTMLRow }
@@ -307,12 +354,21 @@ function THTMLRow.Build: string;
 var
   i: Integer;
   html: TStringList;
+  attributes: string;
 begin
   html := TStringList.Create;
   try
     html.Clear;
     //BUILD ROW
-    html.Add('  <tr ' + Self.Style + ' >');
+    attributes := Self.Style;
+    if FCSSClass <> '' then
+    begin
+      if attributes <> '' then
+        attributes := attributes + ' ';
+      attributes := attributes + 'class="' + FCSSClass + '"';
+    end;
+    
+    html.Add('  <tr ' + attributes + ' >');
     for i := 0 to Self.CellList.Count - 1 do
     begin
       //BUILD CELL
@@ -354,6 +410,7 @@ var
 begin
   FCellList := TObjectList.Create;
   Self.Style := rowStyle;
+  FCSSClass := '';
   for i := 0 to High(rowCellList) do
     CellList.Add(rowCellList[i]);
 end;
@@ -518,11 +575,20 @@ function THTMLParagraph.Build: string;
 var
   html: TStringList;
   i: Integer;
+  attributes: string;
 begin
   html := TStringList.Create;
   try
     html.Clear;
-    html.Add('<p ' + Style + '>');
+    attributes := Style;
+    if FCSSClass <> '' then
+    begin
+      if attributes <> '' then
+        attributes := attributes + ' ';
+      attributes := attributes + 'class="' + FCSSClass + '"';
+    end;
+    
+    html.Add('<p ' + attributes + '>');
     html.Add(Self.Name);
     for i := 0 to Self.ItemList.Count - 1 do
       html.Add(TBuild.Build(Self.ItemList[i]));
@@ -549,6 +615,7 @@ begin
   FItemList := TObjectList.Create;
   Self.Name := paragraphName;
   Self.Style := style;
+  FCSSClass := '';
 end;
 
 end.

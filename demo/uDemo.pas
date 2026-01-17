@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnCSSClass: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnCSSClassClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -136,8 +138,68 @@ begin
         THTMLCell.Create('$' + FormatFloat('#,###.00', (priceValue*0.95)), ''),
         THTMLCell.Create('$' + FormatFloat('#,###.00', (priceValue*0.9)), '')], '');
     end;
-
     html.AddParagraph('Test using multi header', cPARAGRAPH_STYLE);
+    html.AddTable(table);
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
+procedure TfrmDemo.btnCSSClassClick(Sender: TObject);
+const
+  cPARAGRAPH_STYLE='style="font-weight:bold;font-size:15pt;text-align:center;"';
+  cHEADER_STYLE='style="font-weight:bold"';
+var
+  html: THTMLReport;
+  table: THTMLTable;
+  row: THTMLRow;
+  cell: THTMLCell;
+  para: THTMLParagraph;
+  i: Integer;
+begin
+  html := THTMLReport.Create;
+  try
+    // Add custom CSS for testing
+    html.Style := '.table-custom { border: 2px solid #336699; width: 100%; border-collapse: collapse; }';
+    html.Style := html.Style + sLineBreak + '.header-row { background-color: #336699; color: white; font-weight: bold; }';
+    html.Style := html.Style + sLineBreak + '.odd-row { background-color: #E8F4F8; }';
+    html.Style := html.Style + sLineBreak + '.even-row { background-color: #FFFFFF; }';
+    html.Style := html.Style + sLineBreak + '.cell-custom { padding: 8px; text-align: left; border: 1px solid #ddd; }';
+    html.Style := html.Style + sLineBreak + '.paragraph-custom { color: #336699; margin-bottom: 20px; }';
+    // Create table with CSSClass
+    table := THTMLTable.Create;
+    table.CSSClass := 'table-custom';
+    
+    // Add header row with CSSClass
+    row := table.AddRow('Header', '');
+    row.CSSClass := 'header-row';
+    cell := row.AddCell('Product Name', cHEADER_STYLE);
+    cell.CSSClass := 'cell-custom';
+    cell := row.AddCell('Price', cHEADER_STYLE);
+    cell.CSSClass := 'cell-custom';
+    
+    // Add data rows with alternating CSS classes
+    for i := 1 to 10 do
+    begin
+      if i mod 2 = 1 then
+        row := table.AddRow('', '')
+      else
+        row := table.AddRow('', '');
+        
+      if i mod 2 = 1 then
+        row.CSSClass := 'odd-row'
+      else
+        row.CSSClass := 'even-row';
+        
+      cell := row.AddCell('Product ' + IntToStr(i), '');
+      cell.CSSClass := 'cell-custom';
+      cell := row.AddCell('$' + IntToStr(i * 100), '');
+      cell.CSSClass := 'cell-custom';
+    end;
+    // Add paragraph with CSSClass
+    para := html.AddParagraph('CSS Class Test Demo', cPARAGRAPH_STYLE);
+    para.CSSClass := 'paragraph-custom';
+    
     html.AddTable(table);
     OpenHTMLDocument(html);
   finally
