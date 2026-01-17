@@ -8,6 +8,8 @@ uses
 type
   THTMLBase = class
   end;
+
+  THTMLList = class;
   
   THTMLCell = class
   private
@@ -20,6 +22,7 @@ type
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
     property ItemList: TObjectList read FItemList write FItemList;
+    function AddList(AOrdered: Boolean = False; AStyle: string = ''): THTMLList;
     function Build: string;
     constructor Create;overload;
     constructor Create(cellName, cellStyle: string);overload;
@@ -53,6 +56,7 @@ type
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
     property ItemList: TObjectList read FItemList write FItemList;
+    function AddList(AOrdered: Boolean = False; AStyle: string = ''): THTMLList;
     function Build: string;
     constructor Create;overload;
     constructor Create(paragraphName, style: string);overload;
@@ -100,6 +104,23 @@ type
     destructor Destroy;override;
   end;
 
+  THTMLList = class(THTMLBase)
+  private
+    FItemList: TObjectList;
+    FStyle: string;
+    FOrdered: Boolean;
+  protected
+  public
+    property Style: string read FStyle write FStyle;
+    property Ordered: Boolean read FOrdered write FOrdered;
+    property ItemList: TObjectList read FItemList write FItemList;
+    procedure AddItem(const Text: string); overload;
+    procedure AddItem(Item: TObject); overload;
+    function Build: string;
+    constructor Create(AOrdered: Boolean = False; AStyle: string = '');
+    destructor Destroy; override;
+  end;
+
   THTMLReport = class
   private
     FHTMLItemList: TObjectList;
@@ -118,6 +139,7 @@ type
     procedure AddTable(table: THTMLTable);
     procedure AddItem(item: THTMLItem);
     function AddParagraph(paragraphName, paragraphStyle: string): THTMLParagraph;
+    function AddList(AOrdered: Boolean = False; AStyle: string = ''): THTMLList;
     function Build: string;
     procedure SaveToFile(fileName: string);
     procedure Clear;
@@ -293,6 +315,12 @@ begin
   FItemList := TObjectList.Create;
   Name := cellName;
   Style := cellStyle;
+end;
+
+function THTMLCell.AddList(AOrdered: Boolean; AStyle: string): THTMLList;
+begin
+  Result := THTMLList.Create(AOrdered, AStyle);
+  FItemList.Add(Result);
 end;
 
 { THTMLRow }
@@ -504,10 +532,81 @@ begin
   else if item is THTMLItem then
     Result := THTMLItem(item).Build
   else if item is THTMLParagraph then
-    Result := THTMLParagraph(item).Build;
+    Result := THTMLParagraph(item).Build
+  else if item is THTMLList then
+    Result := THTMLList(item).Build
+  else
+    Result := '';
 end;
 
-{ THTMLParagraph }
+{ THTMLList }
+
+constructor THTMLList.Create(AOrdered: Boolean = False; AStyle: string = '');
+begin
+  FItemList := TObjectList.Create;
+  FOrdered := AOrdered;
+  FStyle := AStyle;
+end;
+
+destructor THTMLList.Destroy;
+begin
+  FreeAndNil(FItemList);
+  inherited Destroy;
+end;
+
+procedure THTMLList.AddItem(const Text: string);
+var
+  Item: THTMLItem;
+begin
+  Item := THTMLItem.Create(Text);
+  FItemList.Add(Item);
+end;
+
+procedure THTMLList.AddItem(Item: TObject);
+begin
+  if Assigned(Item) then
+    FItemList.Add(Item);
+end;
+
+function THTMLList.Build: string;
+var
+  html: TStringList;
+  i: Integer;
+  ListTag: string;
+begin
+  html := TStringList.Create;
+  try
+    if FOrdered then
+      ListTag := 'ol'
+    else
+      ListTag := 'ul';
+    
+    if FStyle <> '' then
+      html.Add('<' + ListTag + ' ' + FStyle + '>')
+    else
+      html.Add('<' + ListTag + '>');
+    
+    for i := 0 to FItemList.Count - 1 do
+    begin
+      html.Add('  <li>');
+      html.Add('    ' + TBuild.Build(FItemList[i]));
+      html.Add('  </li>');
+    end;
+    
+    html.Add('</' + ListTag + '>');
+    Result := html.Text;
+  finally
+    FreeAndNil(html);
+  end;
+end;
+
+{ THTMLReport }
+
+function THTMLReport.AddList(AOrdered: Boolean; AStyle: string): THTMLList;
+begin
+  Result := THTMLList.Create(AOrdered, AStyle);
+  HTMLItemList.Add(Result);
+end;
 
 constructor THTMLParagraph.Create;
 begin
@@ -549,6 +648,12 @@ begin
   FItemList := TObjectList.Create;
   Self.Name := paragraphName;
   Self.Style := style;
+end;
+
+function THTMLParagraph.AddList(AOrdered: Boolean; AStyle: string): THTMLList;
+begin
+  Result := THTMLList.Create(AOrdered, AStyle);
+  FItemList.Add(Result);
 end;
 
 end.
