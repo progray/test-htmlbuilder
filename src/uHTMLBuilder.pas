@@ -6,10 +6,24 @@ uses
   Classes, Contnrs, SysUtils, DB;
 
 type
-  THTMLBase = class
+  IHTMLBuildable = interface
+    ['{4B2B1A3D-3D1E-4F2B-8D6C-6E7D8E9F0A1B}']
+    function Build: string;
   end;
   
-  THTMLCell = class
+  TNoRefCountObject = class(TObject, IInterface)
+  protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+  end;
+
+  THTMLBase = class(TNoRefCountObject, IHTMLBuildable)
+  public
+    function Build: string; virtual;
+  end;
+
+  THTMLCell = class(TNoRefCountObject, IHTMLBuildable)
   private
     Fstyle: string;
     FName: string;
@@ -31,7 +45,7 @@ type
     DataSet: TDataSet
   ) of object;  
 
-  THTMLItem = class
+  THTMLItem = class(TNoRefCountObject, IHTMLBuildable)
   private
     FHtml: TStringList;
   protected
@@ -42,7 +56,7 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLParagraph = class
+  THTMLParagraph = class(TNoRefCountObject, IHTMLBuildable)
   private
     Fstyle: string;
     FName: string;
@@ -59,7 +73,7 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLRow = class
+  THTMLRow = class(TNoRefCountObject, IHTMLBuildable)
   private
     Fstyle: string;
     FName: string;
@@ -78,7 +92,7 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLTable = class(THTMLBase)
+  THTMLTable = class(THTMLBase, IHTMLBuildable)
   private
     FRowList: TObjectList;
     Fstyle: string;
@@ -100,7 +114,7 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLReport = class
+  THTMLReport = class(TNoRefCountObject, IHTMLBuildable)
   private
     FHTMLItemList: TObjectList;
     FStyle: string;
@@ -132,6 +146,33 @@ type
   end;
 
 implementation
+
+{ THTMLBase }
+
+function THTMLBase.Build: string;
+begin
+  Result := '';
+end;
+
+{ TNoRefCountObject }
+
+function TNoRefCountObject.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function TNoRefCountObject._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function TNoRefCountObject._Release: Integer;
+begin
+  Result := -1;
+end;
 
 { THTMLTable }
 
@@ -492,19 +533,13 @@ end;
 { TBuild }
 
 class function TBuild.Build(item: TObject): string;
+var
+  Buildable: IHTMLBuildable;
 begin
-  if item is THTMLReport then
-    Result := THTMLReport(item).Build
-  else if item is THTMLTable then
-    Result := THTMLTable(item).Build
-  else if item is THTMLRow then
-    Result := THTMLRow(item).Build
-  else if item is THTMLCell then
-    Result := THTMLCell(item).Build
-  else if item is THTMLItem then
-    Result := THTMLItem(item).Build
-  else if item is THTMLParagraph then
-    Result := THTMLParagraph(item).Build;
+  if Supports(item, IHTMLBuildable, Buildable) then
+    Result := Buildable.Build
+  else
+    Result := '';
 end;
 
 { THTMLParagraph }
