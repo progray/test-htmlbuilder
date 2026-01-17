@@ -6,16 +6,24 @@ uses
   Classes, Contnrs, SysUtils, DB;
 
 type
+  IHTMLBuildable = interface
+    ['{B8F7A3C1-5D4E-4F8A-9B2C-3E6D1F8A7C9B}']
+    function Build: string;
+  end;
+
   THTMLBase = class
   end;
   
-  THTMLCell = class
+  THTMLCell = class(TObject, IHTMLBuildable)
   private
     Fstyle: string;
     FName: string;
     FItemList: TObjectList;
     procedure Initialize(cellName:string = ''; cellStyle: string = '');
   protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
@@ -31,10 +39,13 @@ type
     DataSet: TDataSet
   ) of object;  
 
-  THTMLItem = class
+  THTMLItem = class(TObject, IHTMLBuildable)
   private
     FHtml: TStringList;
   protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     property HTML: TStringList read FHtml write FHtml;
     function Build: string;
@@ -42,13 +53,16 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLParagraph = class
+  THTMLParagraph = class(TObject, IHTMLBuildable)
   private
     Fstyle: string;
     FName: string;
     FItemList: TObjectList;
     procedure Initialize(paragraphName:string = ''; style: string = '');
   protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
@@ -59,13 +73,16 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLRow = class
+  THTMLRow = class(TObject, IHTMLBuildable)
   private
     Fstyle: string;
     FName: string;
     FCellList: TObjectList;
     procedure Initialize(rowCellList: array of THTMLCell; rowStyle: string = '');
   protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
@@ -78,11 +95,14 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLTable = class(THTMLBase)
+  THTMLTable = class(THTMLBase, IHTMLBuildable)
   private
     FRowList: TObjectList;
     Fstyle: string;
   protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     property Style: string read FStyle write FStyle;
     property RowList: TObjectList read FRowList write FRowList;
@@ -100,7 +120,7 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLReport = class
+  THTMLReport = class(TObject, IHTMLBuildable)
   private
     FHTMLItemList: TObjectList;
     FStyle: string;
@@ -109,6 +129,9 @@ type
     function BuildDefaultStyle: string;
     procedure Initialize(reportStyle: string = '');
   protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
     procedure SetStyle(value: string);
   public
     property HTMLItemList: TObjectList read FHTMLItemList write FHTMLItemList;
@@ -134,6 +157,24 @@ type
 implementation
 
 { THTMLTable }
+
+function THTMLTable.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function THTMLTable._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function THTMLTable._Release: Integer;
+begin
+  Result := -1;
+end;
 
 function THTMLTable.AddRow(cellList: array of THTMLCell;
   rowStyle: string): THTMLRow;
@@ -252,6 +293,25 @@ begin
 end;
 
 { THTMLCell }
+
+function THTMLCell.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function THTMLCell._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function THTMLCell._Release: Integer;
+begin
+  Result := -1;
+end;
+
 constructor THTMLCell.Create(cellName, cellStyle: string);
 begin
   Initialize(cellName, cellStyle);
@@ -296,6 +356,24 @@ begin
 end;
 
 { THTMLRow }
+
+function THTMLRow.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function THTMLRow._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function THTMLRow._Release: Integer;
+begin
+  Result := -1;
+end;
 
 function THTMLRow.AddCell(cellName, cellStyle: string): THTMLCell;
 begin
@@ -359,6 +437,24 @@ begin
 end;
 
 { THTMLReport }
+
+function THTMLReport.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function THTMLReport._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function THTMLReport._Release: Integer;
+begin
+  Result := -1;
+end;
 
 procedure THTMLReport.AddItem(item: THTMLItem);
 begin
@@ -471,6 +567,24 @@ end;
 
 { THTMLItem }
 
+function THTMLItem.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function THTMLItem._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function THTMLItem._Release: Integer;
+begin
+  Result := -1;
+end;
+
 function THTMLItem.Build: string;
 begin
   Result := HTML.Text;
@@ -492,22 +606,34 @@ end;
 { TBuild }
 
 class function TBuild.Build(item: TObject): string;
+var
+  buildable: IHTMLBuildable;
 begin
-  if item is THTMLReport then
-    Result := THTMLReport(item).Build
-  else if item is THTMLTable then
-    Result := THTMLTable(item).Build
-  else if item is THTMLRow then
-    Result := THTMLRow(item).Build
-  else if item is THTMLCell then
-    Result := THTMLCell(item).Build
-  else if item is THTMLItem then
-    Result := THTMLItem(item).Build
-  else if item is THTMLParagraph then
-    Result := THTMLParagraph(item).Build;
+  if Supports(item, IHTMLBuildable, buildable) then
+    Result := buildable.Build
+  else
+    Result := '';
 end;
 
 { THTMLParagraph }
+
+function THTMLParagraph.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function THTMLParagraph._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function THTMLParagraph._Release: Integer;
+begin
+  Result := -1;
+end;
 
 constructor THTMLParagraph.Create;
 begin
