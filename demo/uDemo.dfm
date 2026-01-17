@@ -2,7 +2,7 @@ object frmDemo: TfrmDemo
   Left = 313
   Top = 176
   Caption = 'frmDemo'
-  ClientHeight = 107
+  ClientHeight = 147
   ClientWidth = 199
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -31,6 +31,15 @@ object frmDemo: TfrmDemo
     Caption = 'Multi Header'
     TabOrder = 1
     OnClick = btnMultiHeaderClick
+  end
+  object btnCSSClassDemo: TButton
+    Left = 24
+    Top = 104
+    Width = 150
+    Height = 25
+    Caption = 'CSS Class Demo'
+    TabOrder = 2
+    OnClick = btnCSSClassDemoClick
   end
   object cdsProducts: TClientDataSet
     Aggregates = <>

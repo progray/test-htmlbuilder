@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnCSSClassDemo: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnCSSClassDemoClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -145,4 +147,63 @@ begin
   end;
 end;
 
+
+procedure TfrmDemo.btnCSSClassDemoClick(Sender: TObject);
+const
+  cPARAGRAPH_STYLE='style="font-weight:bold;font-size:15pt;text-align:center;"';
+  cBOOTSTRAP_STYLE='.table { width: 100%; border-collapse: collapse; font-family: Arial; font-size: 11pt;} '
+                   + '.table-header { background-color: #3498db; color: white; font-weight: bold;} '
+                   + '.table-row-even { background-color: #ecf0f1;} '
+                   + '.table-row-odd { background-color: #ffffff;} '
+                   + '.table-cell { padding: 8px; border: 1px solid #bdc3c7;} '
+                   + '.title-text { color: #2c3e50; margin-bottom: 20px;}';
+var
+  html: THTMLReport;
+  table: THTMLTable;
+  row: THTMLRow;
+  cell: THTMLCell;
+  i: Integer;
+  priceValue: Integer;
+begin
+  html := THTMLReport.Create(cBOOTSTRAP_STYLE);
+  try
+    html.AddParagraph('CSS Class Attribute Demo', cPARAGRAPH_STYLE).CSSClass := 'title-text';
+    
+    table := THTMLTable.Create;
+    table.CSSClass := 'table';
+    
+    row := table.AddRow('Product', '');
+    row.CSSClass := 'table-header';
+    cell := row.AddCell('Product Name', '');
+    cell.CSSClass := 'table-cell';
+    cell := row.AddCell('Price', '');
+    cell.CSSClass := 'table-cell';
+    cell := row.AddCell('Discounted', '');
+    cell.CSSClass := 'table-cell';
+    
+    for i := 1 to 10 do
+    begin
+      priceValue := RandomRange(1, 50) * 10;
+      row := table.AddRow('', '');
+      if i mod 2 = 0 then
+        row.CSSClass := 'table-row-even'
+      else
+        row.CSSClass := 'table-row-odd';
+      
+      cell := row.AddCell('Product ' + IntToStr(i), '');
+      cell.CSSClass := 'table-cell';
+      
+      cell := row.AddCell('$' + FormatFloat('#,###.00', priceValue), '');
+      cell.CSSClass := 'table-cell';
+      
+      cell := row.AddCell('$' + FormatFloat('#,###.00', priceValue * 0.9), '');
+      cell.CSSClass := 'table-cell';
+    end;
+    
+    html.AddTable(table);
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
 end.
