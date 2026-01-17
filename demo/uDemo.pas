@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnListTest: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnListTestClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -139,6 +141,48 @@ begin
 
     html.AddParagraph('Test using multi header', cPARAGRAPH_STYLE);
     html.AddTable(table);
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
+
+procedure TfrmDemo.btnListTestClick(Sender: TObject);
+const
+  cPARAGRAPH_STYLE='style="font-weight:bold;font-size:15pt;text-align:center;"';
+  cLIST_STYLE='style="margin-left:20px;"';
+var
+  html: THTMLReport;
+  list1, list2, list3: THTMLList;
+  table: THTMLTable;
+begin
+  html := THTMLReport.Create(GetReportStyle);
+  try
+    html.AddParagraph('List Test', cPARAGRAPH_STYLE);
+    
+    list1 := html.AddList('Unordered List', cLIST_STYLE, False);
+    list1.AddItem('First item');
+    list1.AddItem('Second item');
+    
+    list2 := THTMLList.Create('Nested Unordered List', cLIST_STYLE, False);
+    list1.AddItem(list2);
+    list2.AddItem('Nested item 1');
+    list2.AddItem('Nested item 2');
+    
+    list1.AddItem('Third item');
+    
+    list3 := html.AddList('Ordered List', cLIST_STYLE, True);
+    list3.AddItem('Ordered item 1');
+    list3.AddItem('Ordered item 2');
+    
+    table := THTMLTable.Create('border="1px solid black"');
+    table.AddRow([THTMLCell.Create('Cell 1', ''), THTMLCell.Create('Cell 2', '')], '');
+    table.AddRow([THTMLCell.Create('Cell 3', ''), THTMLCell.Create('Cell 4', '')], '');
+    
+    list3.AddItem(table);
+    
+    list3.AddItem('Ordered item 3');
+    
     OpenHTMLDocument(html);
   finally
     FreeAndNil(html);
