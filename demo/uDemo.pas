@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnListTest: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnListTestClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -136,7 +138,6 @@ begin
         THTMLCell.Create('$' + FormatFloat('#,###.00', (priceValue*0.95)), ''),
         THTMLCell.Create('$' + FormatFloat('#,###.00', (priceValue*0.9)), '')], '');
     end;
-
     html.AddParagraph('Test using multi header', cPARAGRAPH_STYLE);
     html.AddTable(table);
     OpenHTMLDocument(html);
@@ -144,5 +145,58 @@ begin
     FreeAndNil(html);
   end;
 end;
-
+procedure TfrmDemo.btnListTestClick(Sender: TObject);
+const
+  cPARAGRAPH_STYLE='style="font-weight:bold;font-size:15pt;text-align:center;"';
+var
+  html: THTMLReport;
+  list: THTMLList;
+  nestedList: THTMLList;
+  nestedList2: THTMLList;
+  table: THTMLTable;
+begin
+  html := THTMLReport.Create(GetReportStyle);
+  try
+    html.AddParagraph('List Test', cPARAGRAPH_STYLE);
+    // Unordered list
+    list := html.AddList(False);
+    list.Style := 'style="color:blue"';
+    list.AddItem('First item');
+    list.AddItem('Second item');
+    list.AddItem('Third item');
+    // Ordered list
+    list := html.AddList(True);
+    list.AddItem('First ordered item');
+    list.AddItem('Second ordered item');
+    // Nested list
+    list := html.AddList(False);
+    list.AddItem('Parent item');
+    nestedList := THTMLList.Create(True);
+    nestedList.AddItem('Child item 1');
+    nestedList.AddItem('Child item 2');
+    list.AddItem(nestedList);
+    // Deeply nested list
+    list := html.AddList(False);
+    list.AddItem('Level 1 - Item 1');
+    nestedList := THTMLList.Create(True);
+    nestedList.AddItem('Level 2 - Item 1');
+    nestedList2 := THTMLList.Create(False);
+    nestedList2.AddItem('Level 3 - Item 1');
+    nestedList2.AddItem('Level 3 - Item 2');
+    nestedList.AddItem(nestedList2);
+    nestedList.AddItem('Level 2 - Item 2');
+    list.AddItem(nestedList);
+    list.AddItem('Level 1 - Item 2');
+    // List with table
+    list := html.AddList(False);
+    list.AddItem('Item with table:');
+    table := THTMLTable.Create('border="1px solid black"');
+    table.AddRow([THTMLCell.Create('Column 1', ''), THTMLCell.Create('Column 2', '')], '');
+    table.AddRow([THTMLCell.Create('Value 1', ''), THTMLCell.Create('Value 2', '')], '');
+    list.AddItem(table);
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
 end.
