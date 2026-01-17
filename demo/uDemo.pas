@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnTestList: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnTestListClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -145,4 +147,67 @@ begin
   end;
 end;
 
+procedure TfrmDemo.btnTestListClick(Sender: TObject);
+const
+  cPARAGRAPH_STYLE='style="font-weight:bold;font-size:15pt;text-align:center;"';
+var
+  html: THTMLReport;
+  List1: THTMLList;
+  List2: THTMLList;
+  NestedList: THTMLList;
+  Table: THTMLTable;
+  i: Integer;
+begin
+  html := THTMLReport.Create(GetReportStyle);
+  try
+    html.AddParagraph('Test List Features', cPARAGRAPH_STYLE);
+    
+    html.AddParagraph('1. Unordered List (String Items)', 'style="font-weight:bold;margin-top:20px;"');
+    List1 := html.AddList(False, 'style="color:blue;"');
+    for i := 1 to 3 do
+      List1.AddItem('Item ' + IntToStr(i) + ' - Simple Text');
+    
+    html.AddParagraph('2. Ordered List', 'style="font-weight:bold;margin-top:20px;"');
+    List2 := html.AddList(True, 'style="color:green;"');
+    for i := 1 to 3 do
+      List2.AddItem('Step ' + IntToStr(i) + ' - Ordered Item');
+    
+    html.AddParagraph('3. Nested List', 'style="font-weight:bold;margin-top:20px;"');
+    List1 := html.AddList(False);
+    List1.AddItem('Main Item 1');
+    List1.AddItem('Main Item 2');
+    NestedList := THTMLList.Create(False);
+    NestedList.AddItem('Sub Item A');
+    NestedList.AddItem('Sub Item B');
+    List1.AddItem(NestedList);
+    List1.AddItem('Main Item 3');
+    
+    html.AddParagraph('4. List with Nested Table', 'style="font-weight:bold;margin-top:20px;"');
+    List1 := html.AddList(False);
+    List1.AddItem('Products List:');
+    Table := THTMLTable.Create('border="1px solid black"');
+    for i := 1 to 3 do
+      Table.AddRow([THTMLCell.Create('Product ' + IntToStr(i), ''),
+        THTMLCell.Create('$' + IntToStr(i * 100), '')], '');
+    List1.AddItem(Table);
+    List1.AddItem('End of List');
+    
+    html.AddParagraph('5. Deep Nested Lists', 'style="font-weight:bold;margin-top:20px;"');
+    List1 := html.AddList(False);
+    List1.AddItem('Level 1 - Item 1');
+    NestedList := THTMLList.Create(True);
+    NestedList.AddItem('Level 2 - Item A');
+    List2 := THTMLList.Create(False);
+    List2.AddItem('Level 3 - Item X');
+    List2.AddItem('Level 3 - Item Y');
+    NestedList.AddItem(List2);
+    NestedList.AddItem('Level 2 - Item B');
+    List1.AddItem(NestedList);
+    List1.AddItem('Level 1 - Item 2');
+    
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
 end.
