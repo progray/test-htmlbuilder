@@ -2,7 +2,7 @@ object frmDemo: TfrmDemo
   Left = 313
   Top = 176
   Caption = 'frmDemo'
-  ClientHeight = 107
+  ClientHeight = 145
   ClientWidth = 199
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -10,9 +10,7 @@ object frmDemo: TfrmDemo
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
-  OldCreateOrder = False
   OnCreate = FormCreate
-  PixelsPerInch = 96
   TextHeight = 13
   object btnSampleDataSet: TButton
     Left = 24
@@ -31,6 +29,15 @@ object frmDemo: TfrmDemo
     Caption = 'Multi Header'
     TabOrder = 1
     OnClick = btnMultiHeaderClick
+  end
+  object btnListTest: TButton
+    Left = 24
+    Top = 104
+    Width = 150
+    Height = 25
+    Caption = 'List Test'
+    TabOrder = 2
+    OnClick = btnListTestClick
   end
   object cdsProducts: TClientDataSet
     Aggregates = <>
