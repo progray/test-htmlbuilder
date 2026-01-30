@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnListTest: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnListTestClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -139,6 +141,53 @@ begin
 
     html.AddParagraph('Test using multi header', cPARAGRAPH_STYLE);
     html.AddTable(table);
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
+
+procedure TfrmDemo.btnListTestClick(Sender: TObject);
+const
+  cPARAGRAPH_STYLE='style="font-weight:bold;font-size:15pt;text-align:center;"';
+var
+  html: THTMLReport;
+  unorderedList, orderedList, nestedList, innerList: THTMLList;
+  tableInList: THTMLList;
+  table: THTMLTable;
+begin
+  html := THTMLReport.Create(GetReportStyle);
+  try
+    html.AddParagraph('Unordered List Test', cPARAGRAPH_STYLE);
+    unorderedList := html.AddList(ltUnordered);
+    unorderedList.AddItem('First item');
+    unorderedList.AddItem('Second item');
+    unorderedList.AddItem('Third item');
+
+    html.AddParagraph('Ordered List Test', cPARAGRAPH_STYLE);
+    orderedList := html.AddList(ltOrdered);
+    orderedList.AddItem('Step one');
+    orderedList.AddItem('Step two');
+    orderedList.AddItem('Step three');
+
+    html.AddParagraph('Nested List Test', cPARAGRAPH_STYLE);
+    nestedList := html.AddList(ltUnordered);
+    nestedList.AddItem('Parent item 1');
+    innerList := THTMLList.Create(ltOrdered);
+    innerList.AddItem('Nested item 1.1');
+    innerList.AddItem('Nested item 1.2');
+    nestedList.AddItem(innerList);
+    nestedList.AddItem('Parent item 2');
+
+    html.AddParagraph('List with Table', cPARAGRAPH_STYLE);
+    tableInList := html.AddList(ltUnordered);
+    tableInList.AddItem('Item before table');
+    table := THTMLTable.Create('border="1"');
+    table.AddRow([THTMLCell.Create('Col A', ''), THTMLCell.Create('Col B', '')], '');
+    table.AddRow([THTMLCell.Create('Data 1', ''), THTMLCell.Create('Data 2', '')], '');
+    tableInList.AddItem(table);
+    tableInList.AddItem('Item after table');
+
     OpenHTMLDocument(html);
   finally
     FreeAndNil(html);

@@ -6,6 +6,9 @@ uses
   Classes, Contnrs, SysUtils, DB;
 
 type
+  TListType = (ltUnordered, ltOrdered);
+
+type
   THTMLBase = class
   end;
   
@@ -40,6 +43,37 @@ type
     function Build: string;
     constructor Create(itemHtml: string = '');
     destructor Destroy;override;
+  end;
+
+  THTMLListItem = class
+  private
+    FItemList: TObjectList;
+    FText: string;
+    procedure Initialize(itemText: string = '');
+  public
+    property Text: string read FText write FText;
+    property ItemList: TObjectList read FItemList write FItemList;
+    function Build: string;
+    constructor Create(itemText: string = '');
+    destructor Destroy; override;
+  end;
+
+  THTMLList = class
+  private
+    FListType: TListType;
+    FStyle: string;
+    FItemList: TObjectList;
+    procedure Initialize(listType: TListType = ltUnordered; listStyle: string = '');
+  public
+    property ListType: TListType read FListType write FListType;
+    property Style: string read FStyle write FStyle;
+    property ItemList: TObjectList read FItemList write FItemList;
+    function AddItem(itemText: string): THTMLListItem; overload;
+    function AddItem(item: TObject): THTMLListItem; overload;
+    function Build: string;
+    constructor Create; overload;
+    constructor Create(listType: TListType; listStyle: string = ''); overload;
+    destructor Destroy; override;
   end;
 
   THTMLParagraph = class
@@ -117,7 +151,9 @@ type
     property Head: string read FHead write FHead;
     procedure AddTable(table: THTMLTable);
     procedure AddItem(item: THTMLItem);
+    procedure AddList(list: THTMLList);overload;
     function AddParagraph(paragraphName, paragraphStyle: string): THTMLParagraph;
+    function AddList(listType: TListType; listStyle: string = ''): THTMLList;overload;
     function Build: string;
     procedure SaveToFile(fileName: string);
     procedure Clear;
@@ -377,6 +413,17 @@ begin
   HTMLItemList.Add(table);
 end;
 
+procedure THTMLReport.AddList(list: THTMLList);
+begin
+  HTMLItemList.Add(list);
+end;
+
+function THTMLReport.AddList(listType: TListType; listStyle: string): THTMLList;
+begin
+  Result := THTMLList.Create(listType, listStyle);
+  HTMLItemList.Add(Result);
+end;
+
 function THTMLReport.Build: string;
 var
   i: Integer;
@@ -504,7 +551,11 @@ begin
   else if item is THTMLItem then
     Result := THTMLItem(item).Build
   else if item is THTMLParagraph then
-    Result := THTMLParagraph(item).Build;
+    Result := THTMLParagraph(item).Build
+  else if item is THTMLList then
+    Result := THTMLList(item).Build
+  else if item is THTMLListItem then
+    Result := THTMLListItem(item).Build;
 end;
 
 { THTMLParagraph }
@@ -549,6 +600,106 @@ begin
   FItemList := TObjectList.Create;
   Self.Name := paragraphName;
   Self.Style := style;
+end;
+
+{ THTMLListItem }
+
+constructor THTMLListItem.Create(itemText: string);
+begin
+  Initialize(itemText);
+end;
+
+destructor THTMLListItem.Destroy;
+begin
+  FreeAndNil(FItemList);
+  inherited Destroy;
+end;
+
+procedure THTMLListItem.Initialize(itemText: string);
+begin
+  FItemList := TObjectList.Create;
+  FText := itemText;
+end;
+
+function THTMLListItem.Build: string;
+var
+  html: TStringList;
+  i: Integer;
+begin
+  html := TStringList.Create;
+  try
+    html.Clear;
+    html.Add('  <li>');
+    if FText <> '' then
+      html.Add('    ' + FText);
+    for i := 0 to FItemList.Count - 1 do
+      html.Add('    ' + TBuild.Build(FItemList[i]));
+    html.Add('  </li>');
+    Result := html.Text;
+  finally
+    FreeAndNil(html);
+  end;
+end;
+
+{ THTMLList }
+
+constructor THTMLList.Create;
+begin
+  Initialize;
+end;
+
+constructor THTMLList.Create(listType: TListType; listStyle: string);
+begin
+  Initialize(listType, listStyle);
+end;
+
+destructor THTMLList.Destroy;
+begin
+  FreeAndNil(FItemList);
+  inherited Destroy;
+end;
+
+procedure THTMLList.Initialize(listType: TListType; listStyle: string);
+begin
+  FItemList := TObjectList.Create;
+  FListType := listType;
+  FStyle := listStyle;
+end;
+
+function THTMLList.AddItem(itemText: string): THTMLListItem;
+begin
+  Result := THTMLListItem.Create(itemText);
+  FItemList.Add(Result);
+end;
+
+function THTMLList.AddItem(item: TObject): THTMLListItem;
+begin
+  Result := THTMLListItem.Create;
+  Result.ItemList.Add(item);
+  FItemList.Add(Result);
+end;
+
+function THTMLList.Build: string;
+var
+  html: TStringList;
+  tag: string;
+  i: Integer;
+begin
+  html := TStringList.Create;
+  try
+    html.Clear;
+    if FListType = ltOrdered then
+      tag := 'ol'
+    else
+      tag := 'ul';
+    html.Add('<' + tag + ' ' + Style + '>');
+    for i := 0 to FItemList.Count - 1 do
+      html.Add(TBuild.Build(FItemList[i]));
+    html.Add('</' + tag + '>');
+    Result := html.Text;
+  finally
+    FreeAndNil(html);
+  end;
 end;
 
 end.
