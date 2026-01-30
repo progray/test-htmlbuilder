@@ -9,6 +9,44 @@ type
   THTMLBase = class
   end;
   
+  THTMLListType = (ltUnordered, ltOrdered);
+  
+  THTMLListItem = class
+  private
+    FText: string;
+    FObject: TObject;
+    FHasObject: Boolean;
+  public
+    property Text: string read FText write FText;
+    property ItemObject: TObject read FObject write FObject;
+    property HasObject: Boolean read FHasObject write FHasObject;
+    function Build: string;
+    constructor Create(itemText: string = '');
+    constructor CreateWithObject(itemObject: TObject);
+    destructor Destroy; override;
+  end;
+  
+  THTMLList = class(THTMLBase)
+  private
+    FListType: THTMLListType;
+    FStyle: string;
+    FName: string;
+    FItemList: TObjectList;
+    procedure Initialize(listType: THTMLListType = ltUnordered; listStyle: string = '');
+  protected
+  public
+    property ListType: THTMLListType read FListType write FListType;
+    property Style: string read FStyle write FStyle;
+    property Name: string read FName write FName;
+    property ItemList: TObjectList read FItemList write FItemList;
+    function Build: string;
+    function AddItem(itemText: string): THTMLListItem; overload;
+    function AddItem(itemObject: TObject): THTMLListItem; overload;
+    constructor Create; overload;
+    constructor Create(listType: THTMLListType; listStyle: string = ''); overload;
+    destructor Destroy; override;
+  end;
+
   THTMLCell = class
   private
     Fstyle: string;
@@ -117,6 +155,7 @@ type
     property Head: string read FHead write FHead;
     procedure AddTable(table: THTMLTable);
     procedure AddItem(item: THTMLItem);
+    procedure AddList(list: THTMLList);
     function AddParagraph(paragraphName, paragraphStyle: string): THTMLParagraph;
     function Build: string;
     procedure SaveToFile(fileName: string);
@@ -358,7 +397,106 @@ begin
     CellList.Add(rowCellList[i]);
 end;
 
+{ THTMLListItem }
+
+constructor THTMLListItem.Create(itemText: string);
+begin
+  FText := itemText;
+  FObject := nil;
+  FHasObject := False;
+end;
+
+constructor THTMLListItem.CreateWithObject(itemObject: TObject);
+begin
+  FText := '';
+  FObject := itemObject;
+  FHasObject := True;
+end;
+
+destructor THTMLListItem.Destroy;
+begin
+  if FHasObject and Assigned(FObject) then
+    FreeAndNil(FObject);
+  inherited Destroy;
+end;
+
+function THTMLListItem.Build: string;
+begin
+  if FHasObject and Assigned(FObject) then
+    Result := TBuild.Build(FObject)
+  else
+    Result := FText;
+end;
+
+{ THTMLList }
+
+function THTMLList.AddItem(itemText: string): THTMLListItem;
+begin
+  Result := THTMLListItem.Create(itemText);
+  FItemList.Add(Result);
+end;
+
+function THTMLList.AddItem(itemObject: TObject): THTMLListItem;
+begin
+  Result := THTMLListItem.CreateWithObject(itemObject);
+  FItemList.Add(Result);
+end;
+
+function THTMLList.Build: string;
+var
+  i: Integer;
+  html: TStringList;
+  listTag: string;
+begin
+  html := TStringList.Create;
+  try
+    html.Clear;
+    
+    if FListType = ltUnordered then
+      listTag := 'ul'
+    else
+      listTag := 'ol';
+      
+    html.Add('<' + listTag + ' ' + Self.Style + '>');
+    for i := 0 to FItemList.Count - 1 do
+      html.Add('  <li>' + TBuild.Build(FItemList[i]) + '</li>');
+    html.Add('</' + listTag + '>');
+    Result := html.Text;
+  finally
+    FreeAndNil(html);
+  end;
+end;
+
+constructor THTMLList.Create;
+begin
+  Initialize;
+end;
+
+constructor THTMLList.Create(listType: THTMLListType; listStyle: string);
+begin
+  Initialize(listType, listStyle);
+end;
+
+destructor THTMLList.Destroy;
+begin
+  FreeAndNil(FItemList);
+  inherited Destroy;
+end;
+
+procedure THTMLList.Initialize(listType: THTMLListType; listStyle: string);
+begin
+  FListType := listType;
+  FStyle := listStyle;
+  FName := '';
+  FItemList := TObjectList.Create;
+end;
+
 { THTMLReport }
+
+procedure THTMLReport.AddList(list: THTMLList);
+begin
+  HTMLItemList.Add(list);
+end;
 
 procedure THTMLReport.AddItem(item: THTMLItem);
 begin
@@ -504,7 +642,11 @@ begin
   else if item is THTMLItem then
     Result := THTMLItem(item).Build
   else if item is THTMLParagraph then
-    Result := THTMLParagraph(item).Build;
+    Result := THTMLParagraph(item).Build
+  else if item is THTMLList then
+    Result := THTMLList(item).Build
+  else if item is THTMLListItem then
+    Result := THTMLListItem(item).Build;
 end;
 
 { THTMLParagraph }

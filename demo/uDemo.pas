@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnListTest: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnListTestClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -139,6 +141,70 @@ begin
 
     html.AddParagraph('Test using multi header', cPARAGRAPH_STYLE);
     html.AddTable(table);
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
+
+procedure TfrmDemo.btnListTestClick(Sender: TObject);
+const
+  cPARAGRAPH_STYLE='style="font-weight:bold;font-size:15pt;text-align:center;"';
+var
+  html: THTMLReport;
+  unorderedList, orderedList, nestedList: THTMLList;
+  table: THTMLTable;
+  cell1, cell2: THTMLCell;
+  subList: THTMLList;
+begin
+  html := THTMLReport.Create(GetReportStyle);
+  try
+    // 创建无序列表
+    unorderedList := THTMLList.Create(ltUnordered, 'style="color:blue;"');
+    unorderedList.AddItem('First item');
+    unorderedList.AddItem('Second item');
+    unorderedList.AddItem('Third item');
+    
+    // 创建有序列表
+    orderedList := THTMLList.Create(ltOrdered, 'style="color:green;"');
+    orderedList.AddItem('Step 1: Prepare data');
+    orderedList.AddItem('Step 2: Process data');
+    orderedList.AddItem('Step 3: Generate report');
+    
+    // 创建嵌套列表
+    nestedList := THTMLList.Create(ltUnordered, 'style="color:red;"');
+    nestedList.AddItem('Main item 1');
+    
+    // 创建一个子列表
+    subList := THTMLList.Create(ltOrdered);
+    subList.AddItem('Sub item 1.1');
+    subList.AddItem('Sub item 1.2');
+    
+    // 创建一个表格作为子项
+    table := THTMLTable.Create('border="1" style="width:80%;"');
+    cell1 := THTMLCell.Create('Cell 1', 'style="padding:5px;"');
+    cell2 := THTMLCell.Create('Cell 2', 'style="padding:5px;"');
+    var cells: array of THTMLCell;
+    SetLength(cells, 2);
+    cells[0] := cell1;
+    cells[1] := cell2;
+    table.AddRow(cells);
+    
+    // 添加子列表和表格到嵌套列表
+    nestedList.AddItem(subList);
+    nestedList.AddItem(table);
+    nestedList.AddItem('Main item 2');
+    
+    // 添加所有列表到报告
+    html.AddParagraph('Unordered List Test', cPARAGRAPH_STYLE);
+    html.AddList(unorderedList);
+    
+    html.AddParagraph('Ordered List Test', cPARAGRAPH_STYLE);
+    html.AddList(orderedList);
+    
+    html.AddParagraph('Nested List Test', cPARAGRAPH_STYLE);
+    html.AddList(nestedList);
+    
     OpenHTMLDocument(html);
   finally
     FreeAndNil(html);

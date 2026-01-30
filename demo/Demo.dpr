@@ -2,7 +2,7 @@ program Demo;
 
 uses
   Forms,
-  uDemo in '..\demo\uDemo.pas' {frmDemo};
+  uDemo in 'uDemo.pas' {frmDemo};
 
 {$R *.res}
 
