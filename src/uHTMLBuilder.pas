@@ -6,10 +6,20 @@ uses
   Classes, Contnrs, SysUtils, DB;
 
 type
-  THTMLBase = class
+  IHTMLBuildable = interface
+    ['{B3F6F9E0-4B8F-4C3F-9F7D-3E8F8F8F8F8F}']
+    function Build: string;
   end;
-  
-  THTMLCell = class
+
+  THTMLBase = class(TObject, IHTMLBuildable)
+  public
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+    function Build: string; virtual;
+  end;
+
+  THTMLCell = class(THTMLBase)
   private
     Fstyle: string;
     FName: string;
@@ -20,29 +30,29 @@ type
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
     property ItemList: TObjectList read FItemList write FItemList;
-    function Build: string;
+    function Build: string; override;
     constructor Create;overload;
     constructor Create(cellName, cellStyle: string);overload;
     destructor Destroy; override;
   end;
-  
+
   TAfterAddRow = procedure (
     Table: THTMLBase;
     DataSet: TDataSet
-  ) of object;  
+  ) of object;
 
-  THTMLItem = class
+  THTMLItem = class(THTMLBase)
   private
     FHtml: TStringList;
   protected
   public
     property HTML: TStringList read FHtml write FHtml;
-    function Build: string;
+    function Build: string; override;
     constructor Create(itemHtml: string = '');
     destructor Destroy;override;
   end;
 
-  THTMLParagraph = class
+  THTMLParagraph = class(THTMLBase)
   private
     Fstyle: string;
     FName: string;
@@ -53,13 +63,13 @@ type
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
     property ItemList: TObjectList read FItemList write FItemList;
-    function Build: string;
+    function Build: string; override;
     constructor Create;overload;
     constructor Create(paragraphName, style: string);overload;
     destructor Destroy;override;
   end;
 
-  THTMLRow = class
+  THTMLRow = class(THTMLBase)
   private
     Fstyle: string;
     FName: string;
@@ -70,7 +80,7 @@ type
     property Style: string read FStyle write FStyle;
     property Name: string read FName write FName;
     property CellList: TObjectList read FCellList write FCellList;
-    function Build: string;
+    function Build: string; override;
     function AddCell(cellName,cellStyle:string): THTMLCell;
     constructor Create;overload;
     constructor Create(rowCellList: array of THTMLCell);overload;
@@ -89,7 +99,7 @@ type
     function AddRow ( cellList: array of THTMLCell; rowStyle: string ): THTMLRow;overload;
     function AddRow ( rowName, rowStyle: string ): THTMLRow;overload;
     function AddEmptyRow(rowStyle:string = '') : THTMLRow;
-    function Build:string;
+    function Build:string; override;
     procedure SetDataSet(dataSet: TDataSet;
         HeaderColor: string = '';
         EvenColor: string = '';
@@ -100,7 +110,7 @@ type
     destructor Destroy;override;
   end;
 
-  THTMLReport = class
+  THTMLReport = class(THTMLBase)
   private
     FHTMLItemList: TObjectList;
     FStyle: string;
@@ -118,7 +128,7 @@ type
     procedure AddTable(table: THTMLTable);
     procedure AddItem(item: THTMLItem);
     function AddParagraph(paragraphName, paragraphStyle: string): THTMLParagraph;
-    function Build: string;
+    function Build: string; override;
     procedure SaveToFile(fileName: string);
     procedure Clear;
     constructor Create;overload;
@@ -132,6 +142,31 @@ type
   end;
 
 implementation
+
+{ THTMLBase }
+
+function THTMLBase.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function THTMLBase._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function THTMLBase._Release: Integer;
+begin
+  Result := -1;
+end;
+
+function THTMLBase.Build: string;
+begin
+  Result := '';
+end;
 
 { THTMLTable }
 
@@ -155,7 +190,7 @@ var
 begin
   row := THTMLrow.Create;
   row.Style := rowStyle;
-  row.CellList.Add(THTMLCell.Create(' ', 'colspan="100%"'));
+  row.CellList.Add(THTMLCell.Create(' ', 'colspan="100%"'));
   FRowList.Add( row );
   Result := row;
 end;
@@ -164,14 +199,17 @@ function THTMLTable.Build: string;
 var
   i: Integer;
   html: TStringList;
+  buildable: IHTMLBuildable;
 begin
   html := TStringList.Create;
   try
     html.Clear;
     html.Add('<table ' + Self.Style + '>');
     for i := 0 to FRowList.Count - 1 do
-      //BUILD ROW
-      html.Add(TBuild.Build(FRowList[i]));
+    begin
+      if Supports(TObject(FRowList[i]), IHTMLBuildable, buildable) then
+        html.Add(buildable.Build);
+    end;
     html.Add('</table>');
     Result := html.Text;
   finally
@@ -188,7 +226,7 @@ end;
 destructor THTMLTable.Destroy;
 begin
   FreeAndNil(FRowList);
-  inherited Destroy;  
+  inherited Destroy;
 end;
 
 function THTMLTable.AddRow(rowName, rowStyle: string): THTMLRow;
@@ -201,7 +239,7 @@ end;
 
 procedure THTMLTable.SetDataSet(
   dataSet: TDataSet; HeaderColor: string = '';
-  EvenColor: string = ''; OddColor: string = ''; 
+  EvenColor: string = ''; OddColor: string = '';
   EmptyValue: string = ''; AfterAddRow: TAfterAddRow = nil);
 const
   StyleHeader='';
@@ -211,7 +249,6 @@ var
   row: THTMLRow;
   cell: THTMLCell;
 begin
-  //prototipo
   row := THTMLRow.Create;
   row.Style := 'bgcolor="' + HeaderColor + '"';
   for i := 0 to dataSet.FieldCount - 1 do
@@ -243,7 +280,7 @@ begin
       Self.RowList.Add(row);
       if Assigned(AfterAddRow) then
         AfterAddRow(Self, dataSet);
-      
+
       dataSet.Next;
     end;
   finally
@@ -261,15 +298,18 @@ function THTMLCell.Build: string;
 var
   html: TStringList;
   i: Integer;
+  buildable: IHTMLBuildable;
 begin
   html := TStringList.Create;
   try
     html.Add('    <td ' + Self.Style + '>');
     if Self.Name <> '' then
       html.Add('      ' + Self.Name);
-    //BUILD CHILD ITEM, HTML, CELL, ETC
     for i := 0 to Self.ItemList.Count - 1 do
-      html.Add('      ' + TBuild.Build(Self.ItemList[i]));
+    begin
+      if Supports(TObject(Self.ItemList[i]), IHTMLBuildable, buildable) then
+        html.Add('      ' + buildable.Build);
+    end;
     html.Add('    </td>');
     Result := html.Text;
   finally
@@ -280,7 +320,7 @@ end;
 destructor THTMLCell.Destroy;
 begin
   FreeAndNil(FItemList);
-  inherited Destroy;  
+  inherited Destroy;
 end;
 
 constructor THTMLCell.Create;
@@ -300,23 +340,23 @@ end;
 function THTMLRow.AddCell(cellName, cellStyle: string): THTMLCell;
 begin
   Result := THTMLCell.Create(cellName, cellStyle);
-  CellList.Add(Result);  
+  CellList.Add(Result);
 end;
 
 function THTMLRow.Build: string;
 var
   i: Integer;
   html: TStringList;
+  buildable: IHTMLBuildable;
 begin
   html := TStringList.Create;
   try
     html.Clear;
-    //BUILD ROW
     html.Add('  <tr ' + Self.Style + ' >');
     for i := 0 to Self.CellList.Count - 1 do
     begin
-      //BUILD CELL
-      html.Add(TBuild.Build(Self.CellList[i]));
+      if Supports(TObject(Self.CellList[i]), IHTMLBuildable, buildable) then
+        html.Add(buildable.Build);
     end;
     html.Add('  </tr>');
     Result := html.Text;
@@ -344,7 +384,7 @@ end;
 destructor THTMLRow.Destroy;
 begin
   FreeAndNil(FCellList);
-  inherited Destroy;  
+  inherited Destroy;
 end;
 
 procedure THTMLRow.Initialize(rowCellList: array of THTMLCell;
@@ -381,6 +421,7 @@ function THTMLReport.Build: string;
 var
   i: Integer;
   html: TstringList;
+  buildable: IHTMLBuildable;
 begin
   html := TStringList.Create;
   try
@@ -391,11 +432,13 @@ begin
     html.Add(       Self.Style);
     html.Add('    </style>');
     html.Add('    '+Self.Head);
-    //html.Add('    <meta http-equiv="X-UA-Compatible" content="IE=7" />');
     html.Add('  </head>');
     html.Add('  <body>');
     for i := 0 to HTMLItemList.Count - 1 do
-      html.Add(TBuild.Build(HTMLItemList[i]));
+    begin
+      if Supports(TObject(HTMLItemList[i]), IHTMLBuildable, buildable) then
+        html.Add(buildable.Build);
+    end;
     html.Add('  </body>');
     html.Add('</html>');
     result := html.Text;
@@ -437,7 +480,7 @@ end;
 destructor THTMLReport.Destroy;
 begin
   FreeAndNil(FHTMLItemList);
-  inherited Destroy;  
+  inherited Destroy;
 end;
 
 procedure THTMLReport.SaveToFile(fileName: string);
@@ -486,25 +529,19 @@ end;
 destructor THTMLItem.Destroy;
 begin
   FreeAndNil(fHTML);
-  inherited Destroy;  
+  inherited Destroy;
 end;
 
 { TBuild }
 
 class function TBuild.Build(item: TObject): string;
+var
+  buildable: IHTMLBuildable;
 begin
-  if item is THTMLReport then
-    Result := THTMLReport(item).Build
-  else if item is THTMLTable then
-    Result := THTMLTable(item).Build
-  else if item is THTMLRow then
-    Result := THTMLRow(item).Build
-  else if item is THTMLCell then
-    Result := THTMLCell(item).Build
-  else if item is THTMLItem then
-    Result := THTMLItem(item).Build
-  else if item is THTMLParagraph then
-    Result := THTMLParagraph(item).Build;
+  if Supports(item, IHTMLBuildable, buildable) then
+    Result := buildable.Build
+  else
+    Result := '';
 end;
 
 { THTMLParagraph }
@@ -518,6 +555,7 @@ function THTMLParagraph.Build: string;
 var
   html: TStringList;
   i: Integer;
+  buildable: IHTMLBuildable;
 begin
   html := TStringList.Create;
   try
@@ -525,7 +563,10 @@ begin
     html.Add('<p ' + Style + '>');
     html.Add(Self.Name);
     for i := 0 to Self.ItemList.Count - 1 do
-      html.Add(TBuild.Build(Self.ItemList[i]));
+    begin
+      if Supports(TObject(Self.ItemList[i]), IHTMLBuildable, buildable) then
+        html.Add(buildable.Build);
+    end;
     html.Add('</p>');
     Result := html.Text;
   finally
