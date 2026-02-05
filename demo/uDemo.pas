@@ -13,9 +13,11 @@ type
     cdsProductsproduct: TStringField;
     cdsProductsprice: TStringField;
     btnMultiHeader: TButton;
+    btnListTest: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btnSampleDataSetClick(Sender: TObject);
     procedure btnMultiHeaderClick(Sender: TObject);
+    procedure btnListTestClick(Sender: TObject);
   private
     { Private declarations }
     procedure PopulateDataSet(dataSet: TDataSet);
@@ -139,6 +141,81 @@ begin
 
     html.AddParagraph('Test using multi header', cPARAGRAPH_STYLE);
     html.AddTable(table);
+    OpenHTMLDocument(html);
+  finally
+    FreeAndNil(html);
+  end;
+end;
+
+procedure TfrmDemo.btnListTestClick(Sender: TObject);
+const
+  cPARAGRAPH_STYLE='style="font-weight:bold;font-size:15pt;text-align:center;"';
+  cLIST_STYLE='style="margin-left:20px;"';
+var
+  html: THTMLReport;
+  ulList: THTMLList;
+  olList: THTMLList;
+  nestedList: THTMLList;
+  table: THTMLTable;
+  cell: THTMLCell;
+begin
+  html := THTMLReport.Create(GetReportStyle);
+  try
+    // Test 1: Simple unordered list with text items
+    html.AddParagraph('Test 1: Simple Unordered List', cPARAGRAPH_STYLE);
+    ulList := THTMLList.Create(False, cLIST_STYLE);
+    ulList.AddItem('First item');
+    ulList.AddItem('Second item');
+    ulList.AddItem('Third item');
+    html.HTMLItemList.Add(ulList);
+
+    // Test 2: Ordered list with text items
+    html.AddParagraph('Test 2: Ordered List', cPARAGRAPH_STYLE);
+    olList := THTMLList.Create(True, cLIST_STYLE);
+    olList.AddItem('Step 1: Initialize');
+    olList.AddItem('Step 2: Process');
+    olList.AddItem('Step 3: Finalize');
+    html.HTMLItemList.Add(olList);
+
+    // Test 3: Nested list - list inside list
+    html.AddParagraph('Test 3: Nested List (List inside List)', cPARAGRAPH_STYLE);
+    ulList := THTMLList.Create(False, cLIST_STYLE);
+    ulList.AddItem('Fruits');
+    nestedList := THTMLList.Create(False, cLIST_STYLE);
+    nestedList.AddItem('Apple');
+    nestedList.AddItem('Banana');
+    nestedList.AddItem('Orange');
+    ulList.AddItem(nestedList, True);
+    ulList.AddItem('Vegetables');
+    nestedList := THTMLList.Create(False, cLIST_STYLE);
+    nestedList.AddItem('Carrot');
+    nestedList.AddItem('Potato');
+    ulList.AddItem(nestedList, True);
+    html.HTMLItemList.Add(ulList);
+
+    // Test 4: List inside table cell
+    html.AddParagraph('Test 4: List inside Table Cell', cPARAGRAPH_STYLE);
+    table := THTMLTable.Create('border="1px solid black"');
+    cell := THTMLCell.Create('Cell with list:', '');
+    ulList := THTMLList.Create(False, '');
+    ulList.AddItem('Item A');
+    ulList.AddItem('Item B');
+    ulList.AddItem('Item C');
+    cell.ItemList.Add(ulList);
+    table.AddRow([cell, THTMLCell.Create('Normal cell', '')], '');
+    html.AddTable(table);
+
+    // Test 5: Complex nested structure - Table inside list item
+    html.AddParagraph('Test 5: Table inside List Item', cPARAGRAPH_STYLE);
+    ulList := THTMLList.Create(False, cLIST_STYLE);
+    ulList.AddItem('Regular text item');
+    table := THTMLTable.Create('border="1px solid black"');
+    table.AddRow([THTMLCell.Create('Col1', ''), THTMLCell.Create('Col2', '')], '');
+    table.AddRow([THTMLCell.Create('Data1', ''), THTMLCell.Create('Data2', '')], '');
+    ulList.AddItem(table, True);
+    ulList.AddItem('Another text item');
+    html.HTMLItemList.Add(ulList);
+
     OpenHTMLDocument(html);
   finally
     FreeAndNil(html);
